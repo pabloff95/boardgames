@@ -1,5 +1,11 @@
-from django.http import HttpResponse
+from django.http import JsonResponse
+from .models import Game
 
 
 def index(request):
-    return HttpResponse("<h1>Game index</h1>")
+    games = Game.objects.all().values(
+        "id", "name", "description", "min_length", "max_length"
+    )
+
+    games_list = list(games)
+    return JsonResponse(games_list, safe=False)
