@@ -9,5 +9,6 @@ Run backend:
 
 Format code: `black .`
 Update `requirements.txt`: `rm requirements.txt && pip freeze > requirements.txt`
+Run tests: `python manage.py test`
 
 ## Frontend
