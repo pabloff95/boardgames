@@ -19,8 +19,9 @@ Run backend without docker:
 
 ### Backend commands
 
-- Migrate: `docker compose exec backend python backend/manage.py migrate`
-- Add super user `docker compose exec backend python backend/manage.py createsuperuser`
+- Make migration: `docker compose exec django python backend/manage.py makemigrations`
+- Migrate: `docker compose exec django python backend/manage.py migrate`
+- Add super user `docker compose exec django python backend/manage.py createsuperuser`
 
 ### Other commands
 

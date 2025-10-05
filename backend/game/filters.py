@@ -1,5 +1,5 @@
 import django_filters
-from .models import Game
+from .models import Game, GameRules
 
 
 class GameFilter(django_filters.FilterSet):
@@ -12,4 +12,19 @@ class GameFilter(django_filters.FilterSet):
 
     class Meta:
         model = Game
-        fields = ["name", "description", "min_length", "max_length"]
+        fields = [
+            "name",
+            "description",
+            "min_length",
+            "max_length",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class GameRulesFilter(django_filters.FilterSet):
+    version = django_filters.CharFilter(field_name="version", lookup_expr="icontains")
+
+    class Meta:
+        model = GameRules
+        fields = ["game", "version", "content", "created_at", "updated_at"]
