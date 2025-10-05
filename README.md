@@ -1,6 +1,11 @@
 ## Backend
 
-Run backend:
+Run backend with docker:
+
+1. `docker compose build`
+2. `docker compose up`
+
+Run backend without docker:
 
 1. Navigate to the backend folder: `cd backend`
 2. Activate venv: `source venv/bin/activate`

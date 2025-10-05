@@ -1,0 +1,9 @@
+services:
+  backend:
+    build:
+      target: dev
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_ALLOWED_HOSTS=0.0.0.0
