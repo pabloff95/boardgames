@@ -1,6 +1,11 @@
 ## Backend
 
-Run backend with docker:
+To run the backend, first set up the `.env` file with your own data:
+
+1. `cp backend/.env.example backend/.env`
+2. Update the `backend/.env` settings
+
+Run backend with docker (**recommended**):
 
 1. `docker compose build`
 2. `docker compose up`
@@ -12,13 +17,17 @@ Run backend without docker:
 3. Install dependencies: `pip install -r requirements.txt`
 4. Run server: `python manage.py runserver`
 
-Format code: `black .`
-Update `requirements.txt`: `rm requirements.txt && pip freeze > requirements.txt`
-Run tests: `python manage.py test`
-
-### Backend commands:
+### Backend commands
 
 - Migrate: `docker compose exec backend python backend/manage.py migrate`
 - Add super user `docker compose exec backend python backend/manage.py createsuperuser`
+
+### Other commands
+
+Format code: `black .`
+
+Update `requirements.txt`: `rm requirements.txt && pip freeze > requirements.txt`
+
+Run tests: `python manage.py test`
 
 ## Frontend

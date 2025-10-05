@@ -11,11 +11,8 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
-    environment:
-      - DJANGO_ALLOWED_HOSTS=0.0.0.0
-      - POSTGRES_DB=boadgames
-      - POSTGRES_USER=pablo
-      - POSTGRES_PASSWORD=1234
+    env_file:
+    - backend/.env
 
 volumes:
   postgres_data:
