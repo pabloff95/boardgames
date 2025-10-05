@@ -16,4 +16,9 @@ Format code: `black .`
 Update `requirements.txt`: `rm requirements.txt && pip freeze > requirements.txt`
 Run tests: `python manage.py test`
 
+### Backend commands:
+
+- Migrate: `docker compose exec backend python backend/manage.py migrate`
+- Add super user `docker compose exec backend python backend/manage.py createsuperuser`
+
 ## Frontend

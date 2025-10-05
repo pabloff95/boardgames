@@ -1,4 +1,10 @@
 services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
   backend:
     build:
       target: dev
@@ -7,3 +13,9 @@ services:
       - "8000:8000"
     environment:
       - DJANGO_ALLOWED_HOSTS=0.0.0.0
+      - POSTGRES_DB=boadgames
+      - POSTGRES_USER=pablo
+      - POSTGRES_PASSWORD=1234
+
+volumes:
+  postgres_data:
