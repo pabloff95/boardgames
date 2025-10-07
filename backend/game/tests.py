@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 from .models import Game, GameRules
-from backend.urls import namespace
+import os
 
 
 class GameAPITestCase(TestCase):
@@ -28,14 +28,16 @@ class GameAPITestCase(TestCase):
         )
 
     def test_get_games(self):
-        response = self.client.get(f"/{namespace}games/")
+        response = self.client.get(f"/{os.getenv("API_NAMESPACE")}games/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertEqual(len(response.data), 2)
 
     def test_get_game_by_id(self):
-        response = self.client.get(f"/{namespace}games/{self.game1.id}/")
+        response = self.client.get(
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game1.id}/"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -46,7 +48,9 @@ class GameAPITestCase(TestCase):
         self.assertEqual(response.data["max_length"], self.game1.max_length)
 
     def test_get_game_filter_min_length(self):
-        response = self.client.get(f"/{namespace}games/", {"min_length": 10})
+        response = self.client.get(
+            f"/{os.getenv("API_NAMESPACE")}games/", {"min_length": 10}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
@@ -59,7 +63,9 @@ class GameAPITestCase(TestCase):
             "min_length": 60,
             "max_length": 180,
         }
-        response = self.client.post(f"/{namespace}games/", data, format="json")
+        response = self.client.post(
+            f"/{os.getenv("API_NAMESPACE")}games/", data, format="json"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -68,7 +74,7 @@ class GameAPITestCase(TestCase):
     def test_patch_game_description(self):
         data = {"description": "Updated description"}
         response = self.client.patch(
-            f"/{namespace}games/{self.game1.id}/", data, format="json"
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game1.id}/", data, format="json"
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -84,7 +90,7 @@ class GameAPITestCase(TestCase):
             "max_length": 200,
         }
         response = self.client.put(
-            f"/{namespace}games/{self.game1.id}/", data, format="json"
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game1.id}/", data, format="json"
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -96,7 +102,9 @@ class GameAPITestCase(TestCase):
         self.assertEqual(self.game1.max_length, data["max_length"])
 
     def test_delete_game(self):
-        response = self.client.delete(f"/{namespace}games/{self.game2.id}/")
+        response = self.client.delete(
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game2.id}/"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -138,13 +146,15 @@ class GameRulesAPITestCase(TestCase):
         )
 
     def test_get_game_rules(self):
-        response = self.client.get(f"/{namespace}game_rules/")
+        response = self.client.get(f"/{os.getenv("API_NAMESPACE")}game_rules/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
 
     def test_get_game_rule_by_id(self):
-        response = self.client.get(f"/{namespace}game_rules/{self.rules1.id}/")
+        response = self.client.get(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules1.id}/"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -154,7 +164,9 @@ class GameRulesAPITestCase(TestCase):
         self.assertEqual(response.data["content"], self.rules1.content)
 
     def test_get_game_rules_filter_version(self):
-        response = self.client.get(f"/{namespace}game_rules/", {"version": "v2"})
+        response = self.client.get(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/", {"version": "v2"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -167,7 +179,9 @@ class GameRulesAPITestCase(TestCase):
             "version": "v1.1",
             "content": "Additional rules",
         }
-        response = self.client.post(f"/{namespace}game_rules/", data, format="json")
+        response = self.client.post(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/", data, format="json"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -176,7 +190,9 @@ class GameRulesAPITestCase(TestCase):
     def test_patch_game_rule_content(self):
         data = {"content": "Updated rules content"}
         response = self.client.patch(
-            f"/{namespace}game_rules/{self.rules1.id}/", data, format="json"
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules1.id}/",
+            data,
+            format="json",
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -186,7 +202,9 @@ class GameRulesAPITestCase(TestCase):
         self.assertEqual(self.rules1.content, data["content"])
 
     def test_delete_game_rule(self):
-        response = self.client.delete(f"/{namespace}game_rules/{self.rules2.id}/")
+        response = self.client.delete(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules2.id}/"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 

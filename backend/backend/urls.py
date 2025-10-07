@@ -1,9 +1,8 @@
 from django.contrib import admin
 from django.urls import include, path
-
-namespace = "api/v1/"
+import os
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path(namespace, include("game.urls")),
+    path(os.getenv("API_NAMESPACE"), include("game.urls")),
 ]
