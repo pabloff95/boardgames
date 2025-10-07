@@ -14,12 +14,16 @@ class GameAPITestCase(TestCase):
             description="Dummy description text",
             min_length=5,
             max_length=15,
+            created_at="2025-10-05T14:30:00Z",
+            updated_at="2025-10-05T17:54:30.084920Z",
         )
         self.game2 = Game.objects.create(
             name="Chess",
             description="Dummy description text",
             min_length=30,
             max_length=60,
+            created_at="2025-10-05T14:30:00Z",
+            updated_at="2025-10-05T17:54:30.084920Z",
         )
 
     def test_get_games(self):
