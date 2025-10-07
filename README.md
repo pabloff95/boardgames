@@ -3,7 +3,7 @@
 To run the backend, first set up the `.env` file with your own data:
 
 1. `cp backend/.env.example backend/.env`
-2. Update the `backend/.env` settings
+2. Update the `backend/.env` data
 
 Run backend with docker (**recommended**):
 
@@ -19,9 +19,10 @@ Run backend without docker:
 
 ### Backend commands
 
-- Make migration: `docker compose exec django python backend/manage.py makemigrations`
-- Migrate: `docker compose exec django python backend/manage.py migrate`
-- Add super user `docker compose exec django python backend/manage.py createsuperuser`
+- Make migration: `docker compose exec django python manage.py makemigrations`
+- Migrate: `docker compose exec django python manage.py migrate`
+- Add super user `docker compose exec django python manage.py createsuperuser`
+- Run tests: `docker compose exec django python manage.py test`
 
 ### Other commands
 
