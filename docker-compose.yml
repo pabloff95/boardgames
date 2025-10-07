@@ -14,7 +14,7 @@ services:
     env_file:
     - backend/.env
     volumes:
-      - ./backend:/backend/backend 
+      - ./backend:/app 
 
 volumes:
   postgres_data:
