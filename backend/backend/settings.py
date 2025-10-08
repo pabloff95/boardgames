@@ -32,6 +32,8 @@ ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
 # Application definition
 
 INSTALLED_APPS = [
+    "users",
+    "game",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -39,8 +41,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_filters",
-    "game",
 ]
+
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
