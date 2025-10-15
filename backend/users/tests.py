@@ -148,7 +148,7 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("error"), '"saved_games" is required.')
+        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
 
     def test_add_saved_games_not_a_list(self):
         response = self.client.post(
@@ -158,7 +158,7 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("error"), '"saved_games" is required.')
+        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
 
     def test_add_saved_games_empty_list(self):
         response = self.client.post(
@@ -168,7 +168,7 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("error"), '"saved_games" is required.')
+        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
 
     def test_add_saved_games_non_numeric_ids(self):
         response = self.client.post(
@@ -178,8 +178,9 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data.get("error"), '"saved_games" must contain only numeric IDs.'
+        self.assertIn(
+            '"saved_games" must contain only numeric IDs.',
+            response.data["saved_games"][0],
         )
 
     def test_add_saved_games_duplicated_ids_in_request(self):
@@ -198,7 +199,7 @@ class UserAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
             f'Duplicated game id in received "saved_games": {game_ids}',
-            response.data.get("error", ""),
+            response.data["saved_games"][0],
         )
 
     def test_add_saved_games_already_saved(self):
@@ -215,8 +216,8 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(str(game.id), response.data.get("error", ""))
-        self.assertIn("Games already saved", response.data.get("error", ""))
+        self.assertIn(str(game.id), response.data["saved_games"][0])
+        self.assertIn("Games already saved", response.data["saved_games"][0])
 
     def test_add_saved_games_invalid_game_ids(self):
         missing_id = 999999
@@ -228,8 +229,8 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(str(missing_id), response.data.get("error", ""))
-        self.assertIn("Invalid game IDs", response.data.get("error", ""))
+        self.assertIn(str(missing_id), response.data["saved_games"][0])
+        self.assertIn("Invalid game IDs", response.data["saved_games"][0])
 
     def test_remove_saved_games_success_single(self):
         game = Game.objects.create(
@@ -282,7 +283,7 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("error"), '"saved_games" is required.')
+        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
 
     def test_remove_saved_games_not_a_list(self):
         response = self.client.post(
@@ -292,7 +293,7 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("error"), '"saved_games" is required.')
+        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
 
     def test_remove_saved_games_empty_list(self):
         response = self.client.post(
@@ -302,7 +303,7 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("error"), '"saved_games" is required.')
+        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
 
     def test_remove_saved_games_non_numeric_ids(self):
         response = self.client.post(
@@ -312,8 +313,9 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data.get("error"), '"saved_games" must contain only numeric IDs.'
+        self.assertIn(
+            '"saved_games" must contain only numeric IDs.',
+            response.data["saved_games"][0],
         )
 
     def test_remove_saved_games_duplicated_ids_in_request(self):
@@ -334,7 +336,7 @@ class UserAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
             f'Duplicated game id in received "saved_games": {game_ids}',
-            response.data.get("error", ""),
+            response.data["saved_games"][0],
         )
 
     def test_remove_saved_games_not_existing_in_saved_games(self):
@@ -350,7 +352,8 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(str(game.id), response.data.get("error", ""))
+        self.assertIn(str(game.id), response.data["saved_games"][0])
         self.assertIn(
-            "Games do not exist in the user saved games", response.data.get("error", "")
+            "Games do not exist in the user saved games",
+            response.data["saved_games"][0],
         )
