@@ -10,6 +10,7 @@ class GameRulesSerializer(serializers.ModelSerializer):
 
 class GameSerializer(serializers.ModelSerializer):
     rules = GameRulesSerializer(many=True, read_only=True)
+    saved_by_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
@@ -22,4 +23,8 @@ class GameSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "rules",
+            "saved_by_count",
         ]
+
+    def get_saved_by_count(self, obj):
+        return obj.saved_by.count()
