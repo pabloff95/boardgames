@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
 INSTALLED_APPS = [
     "users",
     "game",
+    "reviews",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
