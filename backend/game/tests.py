@@ -1,13 +1,12 @@
-from django.test import TestCase
-from rest_framework.test import APIClient
+from tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from .models import Game, GameRules
 import os
 
 
-class GameAPITestCase(TestCase):
+class GameAPITestCase(AuthenticatedAPITestCase):
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
 
         # Create sample games
         self.game1 = Game.objects.create(
@@ -111,9 +110,9 @@ class GameAPITestCase(TestCase):
         self.assertEqual(Game.objects.count(), 1)
 
 
-class GameRulesAPITestCase(TestCase):
+class GameRulesAPITestCase(AuthenticatedAPITestCase):
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
 
         # Create sample games
         self.game1 = Game.objects.create(

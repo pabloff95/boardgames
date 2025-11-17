@@ -1,14 +1,13 @@
-from django.test import TestCase
-from rest_framework.test import APIClient
+from tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from .models import User
 from game.models import Game
 import os
 
 
-class UserAPITestCase(TestCase):
+class UserAPITestCase(AuthenticatedAPITestCase):
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
 
         # Create sample users
         self.user1 = User.objects.create_user(
@@ -23,7 +22,7 @@ class UserAPITestCase(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data), 3)  # 2 + the logged user
 
     def test_get_user_by_id(self):
         response = self.client.get(
@@ -44,7 +43,7 @@ class UserAPITestCase(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertEqual(User.objects.count(), 3)
+        self.assertEqual(User.objects.count(), 4)  # 3 + the logged user
 
     def test_patch_user_email(self):
         data = {"email": "updated@example.com"}
@@ -74,13 +73,15 @@ class UserAPITestCase(TestCase):
         self.assertEqual(self.user1.email, data["email"])
 
     def test_delete_user(self):
+        users = self.client.get(f"/{os.getenv('API_NAMESPACE')}users/")
+
         response = self.client.delete(
             f"/{os.getenv('API_NAMESPACE')}users/{self.user2.id}/"
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(User.objects.count(), len(users.data) - 1)
 
     def test_patch_saved_games(self):
         game = Game.objects.create(
