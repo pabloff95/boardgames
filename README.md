@@ -28,7 +28,7 @@ Run backend without docker:
 
 Format code: `black .`
 
-Update `requirements.txt`: `rm requirements.txt && pip freeze > requirements.txt`
+Update `requirements.txt` (requires activate the environment): `rm requirements.txt && pip freeze > requirements.txt`
 
 Run tests: `python manage.py test`
 
