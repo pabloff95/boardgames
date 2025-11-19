@@ -109,6 +109,55 @@ class GameAPITestCase(AuthenticatedAPITestCase):
 
         self.assertEqual(Game.objects.count(), 1)
 
+    def test_open_endpoints(self):
+        self.client.logout()
+
+        # Allowed requests
+        response_list = self.client.get(f"/{os.getenv("API_NAMESPACE")}games/")
+        self.assertEqual(response_list.status_code, status.HTTP_200_OK)
+
+        response_retrieve = self.client.get(
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game1.id}/"
+        )
+        self.assertEqual(response_retrieve.status_code, status.HTTP_200_OK)
+
+        # Forbidden requests
+        response_post = self.client.post(
+            f"/{os.getenv("API_NAMESPACE")}games/",
+            {
+                "name": "Monopoly",
+                "description": "Dummy description text",
+                "min_length": 60,
+                "max_length": 180,
+            },
+            format="json",
+        )
+        self.assertEqual(response_post.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_patch = self.client.patch(
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game1.id}/",
+            {"description": "Updated description"},
+            format="json",
+        )
+        self.assertEqual(response_patch.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_put = self.client.put(
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game1.id}/",
+            {
+                "name": "Updated name",
+                "description": "Updated description",
+                "min_length": 100,
+                "max_length": 200,
+            },
+            format="json",
+        )
+        self.assertEqual(response_put.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_delete = self.client.delete(
+            f"/{os.getenv("API_NAMESPACE")}games/{self.game2.id}/"
+        )
+        self.assertEqual(response_delete.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 class GameRulesAPITestCase(AuthenticatedAPITestCase):
     def setUp(self):
@@ -200,6 +249,21 @@ class GameRulesAPITestCase(AuthenticatedAPITestCase):
 
         self.assertEqual(self.rules1.content, data["content"])
 
+    def test_update_game_rule(self):
+        data = {"game": self.game2.id, "version": "v2", "content": "Updated content"}
+        response = self.client.put(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules1.id}/",
+            data,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.rules1.refresh_from_db()
+
+        self.assertEqual(self.rules1.game.id, data["game"])
+        self.assertEqual(self.rules1.version, data["version"])
+        self.assertEqual(self.rules1.content, data["content"])
+
     def test_delete_game_rule(self):
         response = self.client.delete(
             f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules2.id}/"
@@ -208,3 +272,46 @@ class GameRulesAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         self.assertEqual(GameRules.objects.count(), 1)
+
+    def test_open_endpoints(self):
+        self.client.logout()
+
+        # Allowed requests
+        response_list = self.client.get(f"/{os.getenv("API_NAMESPACE")}game_rules/")
+        self.assertEqual(response_list.status_code, status.HTTP_200_OK)
+
+        response_retrieve = self.client.get(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules1.id}/"
+        )
+        self.assertEqual(response_retrieve.status_code, status.HTTP_200_OK)
+
+        # Forbidden requests
+        response_post = self.client.post(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/",
+            {
+                "game": self.game1.id,
+                "version": "v1.1",
+                "content": "Additional rules",
+            },
+            format="json",
+        )
+        self.assertEqual(response_post.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_patch = self.client.patch(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules1.id}/",
+            {"content": "Updated rules content"},
+            format="json",
+        )
+        self.assertEqual(response_patch.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_put = self.client.put(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules1.id}/",
+            {"game": self.game2.id, "version": "v2", "content": "Updated content"},
+            t="json",
+        )
+        self.assertEqual(response_put.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_delete = self.client.delete(
+            f"/{os.getenv("API_NAMESPACE")}game_rules/{self.rules2.id}/"
+        )
+        self.assertEqual(response_delete.status_code, status.HTTP_401_UNAUTHORIZED)

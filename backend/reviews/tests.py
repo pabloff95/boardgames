@@ -149,3 +149,64 @@ class ReviewAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertTrue(all(r["score"] <= 2 for r in response.data))
+
+    def test_open_endpoints(self):
+        self.client.logout()
+
+        # Allowed requests
+        response_list = self.client.get(f"/{os.getenv('API_NAMESPACE')}reviews/")
+        self.assertEqual(response_list.status_code, status.HTTP_200_OK)
+
+        response_list_by_game = self.client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"game": self.game1.id}
+        )
+        self.assertEqual(response_list_by_game.status_code, status.HTTP_200_OK)
+
+        response_retrieve = self.client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review1.id}/"
+        )
+        self.assertEqual(response_retrieve.status_code, status.HTTP_200_OK)
+
+        # Forbidden requests
+        response_list_by_user = self.client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"user": self.user1.id}
+        )
+        self.assertEqual(
+            response_list_by_user.status_code, status.HTTP_401_UNAUTHORIZED
+        )
+
+        response_post = self.client.post(
+            f"/{os.getenv('API_NAMESPACE')}reviews/",
+            {
+                "user": self.user.id,
+                "game": self.game1.id,
+                "score": 4,
+                "comment": "nice",
+            },
+            format="json",
+        )
+        self.assertEqual(response_post.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_patch = self.client.patch(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review1.id}/",
+            {"comment": "Updated comment"},
+            format="json",
+        )
+        self.assertEqual(response_patch.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_put = self.client.put(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review2.id}/",
+            {
+                "user": self.user.id,
+                "game": self.game2.id,
+                "score": 3,
+                "comment": "Updated",
+            },
+            format="json",
+        )
+        self.assertEqual(response_put.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response_delete = self.client.delete(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review2.id}/"
+        )
+        self.assertEqual(response_delete.status_code, status.HTTP_401_UNAUTHORIZED)

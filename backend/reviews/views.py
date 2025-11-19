@@ -3,9 +3,9 @@ from rest_framework import viewsets
 from .serializers import ReviewsSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ReviewFilter
-from rest_framework.response import Response
 from rest_framework.decorators import action
-from .utils.get_data import get_reviews, get_filtered_reviews
+from .utils.get_reviews import get_filtered_reviews
+from rest_framework.permissions import AllowAny
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -14,8 +14,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ReviewFilter
 
-    def get(self, request):
-        return get_reviews(self)
+    def get_permissions(self):
+        if self.action in ["retrieve"]:
+            return [AllowAny()]
+
+        if self.action == "list" and "user" not in self.request.query_params:
+            return [AllowAny()]
+
+        return super().get_permissions()
 
     @action(detail=False, methods=["get"])
     def good_reviews(self, request):
