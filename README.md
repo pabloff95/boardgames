@@ -23,6 +23,7 @@ Run backend without docker:
 - Migrate: `docker compose exec django python manage.py migrate`
 - Add super user `docker compose exec django python manage.py createsuperuser`
 - Run tests: `docker compose exec django python manage.py test`
+- Run single app tests: `docker compose exec django python manage.py test reviews.tests`
 
 ### Other commands
 
