@@ -5,32 +5,26 @@ To run the backend, first set up the `.env` file with your own data:
 1. `cp backend/.env.example backend/.env`
 2. Update the `backend/.env` data
 
-Run backend with docker (**recommended**):
+Build and run the app containers:
 
-1. `docker compose build`
-2. `docker compose up`
+1. `make build`
+2. `make run`
 
-Run backend without docker:
+Or alternatively: `make reset` (re-builds and brings up the containers)
 
-1. Navigate to the backend folder: `cd backend`
-2. Activate venv: `source venv/bin/activate`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run server: `python manage.py runserver`
+To stop the containers: `make stop`
 
-### Backend commands
+### App commands
 
-- Make migration: `docker compose exec django python manage.py makemigrations`
-- Migrate: `docker compose exec django python manage.py migrate`
-- Add super user `docker compose exec django python manage.py createsuperuser`
-- Run tests: `docker compose exec django python manage.py test`
-- Run single app tests: `docker compose exec django python manage.py test reviews.tests`
+Django related commands:
 
-### Other commands
+- `make test`: runs all the backend tests
+- `make test <path>`: runs the specified `<path>` tests (e.g. `make test reviews.tests`)
+- `make migrations`: creates the Django migrations
+- `make migrate`: migrates the backend database
+- `make createsuperuser`: adds a new super user to the DB
 
-Format code: `black .`
+Other commands:
 
-Update `requirements.txt` (requires activate the environment): `rm requirements.txt && pip freeze > requirements.txt`
-
-Run tests: `python manage.py test`
-
-## Frontend
+- `make format`: formats the backend code (using `black`)
+- `make requirements`: updates the `requirements.tsx`file
