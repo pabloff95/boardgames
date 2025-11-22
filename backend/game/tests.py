@@ -1,6 +1,8 @@
 from tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from .models import Game, GameRules
+from reviews.models import Review
+from users.models import User
 import os
 
 
@@ -25,6 +27,22 @@ class GameAPITestCase(AuthenticatedAPITestCase):
             created_at="2025-10-05T14:30:00Z",
             updated_at="2025-10-05T17:54:30.084920Z",
         )
+
+        # Create users
+        self.user1 = User.objects.create(
+            username="user1", email="user1@example.com", password="password"
+        )
+        self.user2 = User.objects.create(
+            username="user2", email="user2@example.com", password="password"
+        )
+        self.user3 = User.objects.create(
+            username="user3", email="user3@example.com", password="password"
+        )
+
+        # Create review objects
+        self.review1 = Review.objects.create(game=self.game1, score=2, user=self.user1)
+        self.review2 = Review.objects.create(game=self.game1, score=4, user=self.user2)
+        self.review3 = Review.objects.create(game=self.game1, score=3, user=self.user3)
 
     def test_get_games(self):
         response = self.client.get(f"/{os.getenv("API_NAMESPACE")}games/")
@@ -157,6 +175,16 @@ class GameAPITestCase(AuthenticatedAPITestCase):
             f"/{os.getenv("API_NAMESPACE")}games/{self.game2.id}/"
         )
         self.assertEqual(response_delete.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_games_average_score(self):
+        response = self.client.get(f"/{os.getenv("API_NAMESPACE")}games/")
+
+        game1_response, game2_response = response.data
+        self.assertEqual(game1_response["id"], self.game1.id)
+        self.assertEqual(game1_response["average_score"], 3)
+
+        self.assertEqual(game2_response["id"], self.game2.id)
+        self.assertEqual(game2_response["average_score"], None)
 
 
 class GameRulesAPITestCase(AuthenticatedAPITestCase):
