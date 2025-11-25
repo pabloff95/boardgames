@@ -5,9 +5,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .filters import GameFilter, GameRulesFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.filters import OrderingFilter
-from django.db.models import Avg, Count, Value, FloatField
+from django.db.models import Avg, Count, FloatField
 from django.db.models.functions import Coalesce
-from django.db.models import F, OrderBy
+from .utils.game_sorts import get_games_of_the_week
+from rest_framework.decorators import action
 
 
 class GameViewSet(viewsets.ModelViewSet):
@@ -41,6 +42,10 @@ class GameViewSet(viewsets.ModelViewSet):
             ),
             saved_by_count=Count("saved_by", distinct=True),
         )
+
+    @action(detail=False, methods=["get"])
+    def games_of_the_week(self, request):
+        return get_games_of_the_week(self)
 
 
 class GameRulesViewSet(viewsets.ModelViewSet):
