@@ -2,7 +2,7 @@
 build:
 	docker compose build
 reset:
-	docker compose up --build
+	docker compose down && docker compose up --build
 run:
 	docker compose up
 stop:
