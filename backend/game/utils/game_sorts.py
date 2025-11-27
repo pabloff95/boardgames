@@ -6,9 +6,13 @@ from rest_framework.response import Response
 from django.db.models import Avg, Q
 
 
-def get_games_of_the_week(self, games_limit=5):
+def get_top_scoring_games_in_days_range(
+    self,
+    days_range: int,
+    games_limit: int,
+) -> Response:
     today = datetime.datetime.today()
-    one_week_ago = (today - datetime.timedelta(days=7)).date()
+    one_week_ago = (today - datetime.timedelta(days=days_range)).date()
 
     week_filter = Q(
         review__created_at__date__range=(

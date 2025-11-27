@@ -27,3 +27,8 @@ class GameSerializer(serializers.ModelSerializer):
             "saved_by_count",
             "average_score",
         ]
+
+
+class GamesOfTheWeekQuerySerializer(serializers.Serializer):
+    days_range = serializers.IntegerField(default=7, min_value=1)
+    games_limit = serializers.IntegerField(default=5, min_value=1)

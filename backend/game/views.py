@@ -1,13 +1,17 @@
 from .models import Game, GameRules
 from rest_framework import viewsets
-from .serializers import GameSerializer, GameRulesSerializer
+from .serializers import (
+    GameSerializer,
+    GameRulesSerializer,
+    GamesOfTheWeekQuerySerializer,
+)
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import GameFilter, GameRulesFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.filters import OrderingFilter
 from django.db.models import Avg, Count, FloatField
 from django.db.models.functions import Coalesce
-from .utils.game_sorts import get_games_of_the_week
+from .utils.game_sorts import get_top_scoring_games_in_days_range
 from rest_framework.decorators import action
 
 
@@ -45,7 +49,17 @@ class GameViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def games_of_the_week(self, request):
-        return get_games_of_the_week(self)
+        serializer = GamesOfTheWeekQuerySerializer(data=request.GET)
+        serializer.is_valid(raise_exception=True)
+
+        days_range = serializer.validated_data["days_range"]
+        games_limit = serializer.validated_data["games_limit"]
+
+        return get_top_scoring_games_in_days_range(
+            self,
+            days_range,
+            games_limit,
+        )
 
 
 class GameRulesViewSet(viewsets.ModelViewSet):
