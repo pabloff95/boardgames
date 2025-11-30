@@ -1,212 +1,219 @@
-from tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from .models import Review
 from users.models import User
 from game.models import Game
 import os
+import pytest
 
 
-class ReviewAPITestCase(AuthenticatedAPITestCase):
-    def setUp(self):
-        super().setUp()
+@pytest.fixture
+def user1():
+    return User.objects.create_user(username="testuser_1", password="password123")
 
-        self.user1 = User.objects.create_user(
-            username="testuser_1", password="password123"
+
+@pytest.fixture
+def game1():
+    return Game.objects.create(
+        name="Game 1",
+        description="Dummy description",
+        min_length=10,
+        max_length=20,
+    )
+
+
+@pytest.fixture
+def game2():
+    return Game.objects.create(
+        name="Game 2",
+        description="Dummy description",
+        min_length=30,
+        max_length=60,
+    )
+
+
+@pytest.fixture
+def review1(user1, game1):
+    return Review.objects.create(user=user1, game=game1, score=1, comment="bad review")
+
+
+@pytest.fixture
+def review2(user1, game2):
+    return Review.objects.create(user=user1, game=game2, score=5, comment="good review")
+
+
+@pytest.mark.django_db
+class TestReviewAPITestCase:
+    def test_get_reviews(self, auth_client, review1, review2):
+        response = auth_client.get(f"/{os.getenv('API_NAMESPACE')}reviews/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 2
+
+    def test_get_review_by_id(self, auth_client, review1):
+        response = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review1.id}/"
         )
 
-        self.game1 = Game.objects.create(
-            name="Game 1",
-            description="Dummy description",
-            min_length=10,
-            max_length=20,
-        )
-        self.game2 = Game.objects.create(
-            name="Game 2",
-            description="Dummy description",
-            min_length=30,
-            max_length=60,
-        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["id"] == review1.id
+        assert response.data["user"] == review1.user.id
+        assert response.data["game"] == review1.game.id
+        assert response.data["score"] == review1.score
+        assert response.data["comment"] == review1.comment
 
-        self.review1 = Review.objects.create(
-            user=self.user1, game=self.game1, score=1, comment="bad review"
-        )
-        self.review2 = Review.objects.create(
-            user=self.user1, game=self.game2, score=5, comment="good review"
+    def test_get_reviews_filtered_by_score(self, auth_client, review1):
+        response = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"score": review1.score}
         )
 
-    def test_get_reviews(self):
-        response = self.client.get(f"/{os.getenv('API_NAMESPACE')}reviews/")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]["id"] == review1.id
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-
-    def test_get_review_by_id(self):
-        response = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review1.id}/"
+    def test_get_reviews_filtered_by_user(self, auth_client, user1, review1, review2):
+        response = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"user": user1.id}
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["id"], self.review1.id)
-        self.assertEqual(response.data["user"], self.review1.user.id)
-        self.assertEqual(response.data["game"], self.review1.game.id)
-        self.assertEqual(response.data["score"], self.review1.score)
-        self.assertEqual(response.data["comment"], self.review1.comment)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 2
+        assert response.data[0]["id"] == review1.id
+        assert response.data[1]["id"] == review2.id
 
-    def test_get_reviews_filtered_by_score(self):
-        response = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/", {"score": self.review1.score}
+    def test_get_reviews_filtered_by_game(self, auth_client, game1, review1):
+        response = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"game": game1.id}
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["id"], self.review1.id)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]["id"] == review1.id
 
-    def test_get_reviews_filtered_by_user(self):
-        response = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/", {"user": self.user1.id}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["id"], self.review1.id)
-        self.assertEqual(response.data[1]["id"], self.review2.id)
-
-    def test_get_reviews_filtered_by_game(self):
-        response = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/", {"game": self.game1.id}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["id"], self.review1.id)
-
-    def test_post_review(self):
+    def test_post_review(self, auth_client, game1):
         data = {
-            "user": self.user.id,
-            "game": self.game1.id,
+            "user": auth_client.user.id,
+            "game": game1.id,
             "score": 4,
             "comment": "nice",
         }
-        response = self.client.post(
+        response = auth_client.post(
             f"/{os.getenv('API_NAMESPACE')}reviews/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Review.objects.count(), 3)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Review.objects.count() == 1
 
-    def test_patch_review_description(self):
+    def test_patch_review_description(self, auth_client, review1):
         data = {"comment": "Updated comment"}
-        response = self.client.patch(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review1.id}/",
+        response = auth_client.patch(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review1.id}/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.review1.refresh_from_db()
-        self.assertEqual(self.review1.comment, data["comment"])
+        assert response.status_code == status.HTTP_200_OK
+        review1.refresh_from_db()
+        assert review1.comment == data["comment"]
 
-    def test_update_review_fields(self):
+    def test_update_review_fields(self, auth_client, game2, review2):
         data = {
-            "user": self.user.id,
-            "game": self.game2.id,
+            "user": auth_client.user.id,
+            "game": game2.id,
             "score": 3,
             "comment": "Updated",
         }
-        response = self.client.put(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review2.id}/",
+        response = auth_client.put(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review2.id}/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.review2.refresh_from_db()
-        self.assertEqual(self.review2.user.id, data["user"])
-        self.assertEqual(self.review2.game.id, data["game"])
-        self.assertEqual(self.review2.score, data["score"])
-        self.assertEqual(self.review2.comment, data["comment"])
+        assert response.status_code == status.HTTP_200_OK
+        review2.refresh_from_db()
+        assert review2.user.id == data["user"]
+        assert review2.game.id == data["game"]
+        assert review2.score == data["score"]
+        assert review2.comment == data["comment"]
 
-    def test_delete_review(self):
-        response = self.client.delete(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review2.id}/"
+    def test_delete_review(self, auth_client, review2):
+        response = auth_client.delete(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review2.id}/"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Review.objects.count(), 1)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert Review.objects.count() == 0
 
-    def test_get_good_reviews(self):
-        response = self.client.get(
+    def test_get_good_reviews(self, auth_client, review1, review2):
+        response = auth_client.get(
             f"/{os.getenv('API_NAMESPACE')}reviews/good_reviews/"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertTrue(all(r["score"] >= 4 for r in response.data))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert all(r["score"] >= 4 for r in response.data)
 
-    def test_get_bad_reviews(self):
-        response = self.client.get(f"/{os.getenv('API_NAMESPACE')}reviews/bad_reviews/")
+    def test_get_bad_reviews(self, auth_client, review1, review2):
+        response = auth_client.get(f"/{os.getenv('API_NAMESPACE')}reviews/bad_reviews/")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertTrue(all(r["score"] <= 2 for r in response.data))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert all(r["score"] <= 2 for r in response.data)
 
-    def test_open_endpoints(self):
-        self.client.logout()
+    def test_open_endpoints(self, auth_client, user1, game1, game2, review1, review2):
+        auth_client.logout()
 
         # Allowed requests
-        response_list = self.client.get(f"/{os.getenv('API_NAMESPACE')}reviews/")
-        self.assertEqual(response_list.status_code, status.HTTP_200_OK)
+        response_list = auth_client.get(f"/{os.getenv('API_NAMESPACE')}reviews/")
+        assert response_list.status_code == status.HTTP_200_OK
 
-        response_list_by_game = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/", {"game": self.game1.id}
+        response_list_by_game = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"game": game1.id}
         )
-        self.assertEqual(response_list_by_game.status_code, status.HTTP_200_OK)
+        assert response_list_by_game.status_code == status.HTTP_200_OK
 
-        response_retrieve = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review1.id}/"
+        response_retrieve = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review1.id}/"
         )
-        self.assertEqual(response_retrieve.status_code, status.HTTP_200_OK)
+        assert response_retrieve.status_code == status.HTTP_200_OK
 
         # Forbidden requests
-        response_list_by_user = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}reviews/", {"user": self.user1.id}
+        response_list_by_user = auth_client.get(
+            f"/{os.getenv('API_NAMESPACE')}reviews/", {"user": user1.id}
         )
-        self.assertEqual(
-            response_list_by_user.status_code, status.HTTP_401_UNAUTHORIZED
-        )
+        assert response_list_by_user.status_code == status.HTTP_401_UNAUTHORIZED
 
-        response_post = self.client.post(
+        response_post = auth_client.post(
             f"/{os.getenv('API_NAMESPACE')}reviews/",
             {
-                "user": self.user.id,
-                "game": self.game1.id,
+                "user": auth_client.user.id,
+                "game": game1.id,
                 "score": 4,
                 "comment": "nice",
             },
             format="json",
         )
-        self.assertEqual(response_post.status_code, status.HTTP_401_UNAUTHORIZED)
+        assert response_post.status_code == status.HTTP_401_UNAUTHORIZED
 
-        response_patch = self.client.patch(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review1.id}/",
+        response_patch = auth_client.patch(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review1.id}/",
             {"comment": "Updated comment"},
             format="json",
         )
-        self.assertEqual(response_patch.status_code, status.HTTP_401_UNAUTHORIZED)
+        assert response_patch.status_code == status.HTTP_401_UNAUTHORIZED
 
-        response_put = self.client.put(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review2.id}/",
+        response_put = auth_client.put(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review2.id}/",
             {
-                "user": self.user.id,
-                "game": self.game2.id,
+                "user": auth_client.user.id,
+                "game": game2.id,
                 "score": 3,
                 "comment": "Updated",
             },
             format="json",
         )
-        self.assertEqual(response_put.status_code, status.HTTP_401_UNAUTHORIZED)
+        assert response_put.status_code == status.HTTP_401_UNAUTHORIZED
 
-        response_delete = self.client.delete(
-            f"/{os.getenv('API_NAMESPACE')}reviews/{self.review2.id}/"
+        response_delete = auth_client.delete(
+            f"/{os.getenv('API_NAMESPACE')}reviews/{review2.id}/"
         )
-        self.assertEqual(response_delete.status_code, status.HTTP_401_UNAUTHORIZED)
+        assert response_delete.status_code == status.HTTP_401_UNAUTHORIZED

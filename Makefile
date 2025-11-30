@@ -11,7 +11,7 @@ stop:
 # Utils
 ARGS ?= $(filter-out $@,$(MAKECMDGOALS))
 test:
-	docker compose exec django python manage.py test ${ARGS}
+	docker compose exec django pytest ${ARGS}
 
 format:
 	docker compose exec django black . 

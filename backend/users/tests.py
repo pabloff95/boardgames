@@ -1,360 +1,338 @@
-from tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from .models import User
 from game.models import Game
 import os
+import pytest
 
 
-class UserAPITestCase(AuthenticatedAPITestCase):
-    def setUp(self):
-        super().setUp()
+@pytest.fixture
+def user1():
+    return User.objects.create_user(
+        username="user1", email="user1@example.com", password="password"
+    )
 
-        # Create sample users
-        self.user1 = User.objects.create_user(
-            username="user1", email="user1@example.com", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            username="user2", email="user2@example.com", password="password"
-        )
 
-    def test_get_users(self):
-        response = self.client.get(f"/{os.getenv('API_NAMESPACE')}users/")
+@pytest.fixture
+def user2():
+    return User.objects.create_user(
+        username="user2", email="user2@example.com", password="password"
+    )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(len(response.data), 3)  # 2 + the logged user
+@pytest.fixture
+def game1():
+    return Game.objects.create(
+        name="Saved Game",
+        description="desc",
+        min_length=10,
+        max_length=20,
+    )
 
-    def test_get_user_by_id(self):
-        response = self.client.get(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/"
-        )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+@pytest.fixture
+def game2():
+    return Game.objects.create(
+        name="AddOne",
+        description="desc",
+        min_length=5,
+        max_length=15,
+    )
 
-        self.assertEqual(response.data["id"], self.user1.id)
-        self.assertEqual(response.data["username"], self.user1.username)
-        self.assertEqual(response.data["email"], self.user1.email)
 
-    def test_post_user(self):
+@pytest.mark.django_db
+class TestUserAPITestCase:
+    def test_get_users(self, auth_client, user1, user2):
+        response = auth_client.get(f"/{os.getenv('API_NAMESPACE')}users/")
+
+        assert response.status_code == status.HTTP_200_OK
+
+        assert len(response.data) == 3  # 2 + the logged user
+
+    def test_get_user_by_id(self, auth_client, user1):
+        response = auth_client.get(f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/")
+
+        assert response.status_code == status.HTTP_200_OK
+
+        assert response.data["id"] == user1.id
+        assert response.data["username"] == user1.username
+        assert response.data["email"] == user1.email
+
+    def test_post_user(self, auth_client, user1, user2):
         data = {"username": "newuser", "email": "new@example.com"}
-        response = self.client.post(
+        response = auth_client.post(
             f"/{os.getenv('API_NAMESPACE')}users/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        assert response.status_code == status.HTTP_201_CREATED
 
-        self.assertEqual(User.objects.count(), 4)  # 3 + the logged user
+        assert User.objects.count() == 4  # 3 + the logged user
 
-    def test_patch_user_email(self):
+    def test_patch_user_email(self, auth_client, user1):
         data = {"email": "updated@example.com"}
-        response = self.client.patch(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/", data, format="json"
+        response = auth_client.patch(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user1.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK
+        user1.refresh_from_db()
 
-        self.assertEqual(self.user1.email, data["email"])
+        assert user1.email == data["email"]
 
-    def test_update_user(self):
+    def test_update_user(self, auth_client, user1):
         data = {
             "username": "updatedname",
             "email": "updated2@example.com",
             "saved_games": [],
         }
-        response = self.client.put(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/", data, format="json"
+        response = auth_client.put(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user1.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK
+        user1.refresh_from_db()
 
-        self.assertEqual(self.user1.username, data["username"])
-        self.assertEqual(self.user1.email, data["email"])
+        assert user1.username == data["username"]
+        assert user1.email == data["email"]
 
-    def test_delete_user(self):
-        users = self.client.get(f"/{os.getenv('API_NAMESPACE')}users/")
+    def test_delete_user(self, auth_client, user1, user2):
+        users = auth_client.get(f"/{os.getenv('API_NAMESPACE')}users/")
 
-        response = self.client.delete(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user2.id}/"
+        response = auth_client.delete(f"/{os.getenv('API_NAMESPACE')}users/{user2.id}/")
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        assert User.objects.count() == len(users.data) - 1
+
+    def test_patch_saved_games(self, auth_client, user1, game1):
+        data = {"saved_games": [game1.id]}
+        response = auth_client.patch(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        assert response.status_code == status.HTTP_200_OK
 
-        self.assertEqual(User.objects.count(), len(users.data) - 1)
+        user1.refresh_from_db()
+        assert game1 in user1.saved_games.all()
 
-    def test_patch_saved_games(self):
-        game = Game.objects.create(
-            name="Saved Game",
-            description="desc",
-            min_length=10,
-            max_length=20,
-        )
-
-        data = {"saved_games": [game.id]}
-        response = self.client.patch(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/", data, format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.user1.refresh_from_db()
-        self.assertIn(game, self.user1.saved_games.all())
-
-    def test_add_saved_games_success_single(self):
-        game = Game.objects.create(
-            name="AddOne",
-            description="desc",
-            min_length=5,
-            max_length=15,
-        )
-
-        data = {"saved_games": [game.id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+    def test_add_saved_games_success_single(self, auth_client, user1, game2):
+        data = {"saved_games": [game2.id]}
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user1.refresh_from_db()
-        self.assertIn(game, self.user1.saved_games.all())
+        assert response.status_code == status.HTTP_200_OK
+        user1.refresh_from_db()
+        assert game2 in user1.saved_games.all()
 
-    def test_add_saved_games_success_multiple(self):
-        g1 = Game.objects.create(
-            name="G1", description="d", min_length=5, max_length=10
-        )
-        g2 = Game.objects.create(
-            name="G2", description="d", min_length=5, max_length=10
-        )
-
-        data = {"saved_games": [g1.id, g2.id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+    def test_add_saved_games_success_multiple(self, auth_client, user1, game1, game2):
+        data = {"saved_games": [game1.id, game2.id]}
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user1.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK
+        user1.refresh_from_db()
 
-        self.assertIn(g1, self.user1.saved_games.all())
-        self.assertIn(g2, self.user1.saved_games.all())
+        assert game1 in user1.saved_games.all()
+        assert game2 in user1.saved_games.all()
 
-    def test_add_saved_games_missing_field(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+    def test_add_saved_games_missing_field(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             {},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert '"saved_games" is required.' in response.data["saved_games"][0]
 
-    def test_add_saved_games_not_a_list(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+    def test_add_saved_games_not_a_list(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             {"saved_games": "notalist"},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert '"saved_games" is required.' in response.data["saved_games"][0]
 
-    def test_add_saved_games_empty_list(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+    def test_add_saved_games_empty_list(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             {"saved_games": []},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert '"saved_games" is required.' in response.data["saved_games"][0]
 
-    def test_add_saved_games_non_numeric_ids(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+    def test_add_saved_games_non_numeric_ids(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             {"saved_games": ["abc"]},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            '"saved_games" must contain only numeric IDs.',
-            response.data["saved_games"][0],
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            '"saved_games" must contain only numeric IDs.'
+            in response.data["saved_games"][0]
         )
 
-    def test_add_saved_games_duplicated_ids_in_request(self):
-        game = Game.objects.create(
-            name="DupTest", description="d", min_length=5, max_length=10
-        )
-        game_ids = [game.id, game.id]
+    def tes(self, auth_client, user1, game1):
+        user1.saved_games.add(game1)
+        game_ids = [game1.id, game1.id]
 
         data = {"saved_games": game_ids}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            f'Duplicated game id in received "saved_games": {game_ids}',
-            response.data["saved_games"][0],
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            f'Duplicated game id in received "saved_games": {game_ids}'
+            in response.data["saved_games"][0]
         )
 
-    def test_add_saved_games_already_saved(self):
-        game = Game.objects.create(
-            name="Already", description="d", min_length=5, max_length=10
-        )
-        self.user1.saved_games.add(game)
+    def test_add_saved_games_already_saved(self, auth_client, game1, user1):
+        user1.saved_games.add(game1)
 
-        data = {"saved_games": [game.id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+        data = {"saved_games": [game1.id]}
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(str(game.id), response.data["saved_games"][0])
-        self.assertIn("Games already saved", response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert str(game1.id) in response.data["saved_games"][0]
+        assert "Games already saved" in response.data["saved_games"][0]
 
-    def test_add_saved_games_invalid_game_ids(self):
+    def test_add_saved_games_invalid_game_ids(self, auth_client, user1):
         missing_id = 999999
         data = {"saved_games": [missing_id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/add_saved_games/",
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/add_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(str(missing_id), response.data["saved_games"][0])
-        self.assertIn("Invalid game IDs", response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert str(missing_id) in response.data["saved_games"][0]
+        assert "Invalid game IDs" in response.data["saved_games"][0]
 
-    def test_remove_saved_games_success_single(self):
-        game = Game.objects.create(
-            name="RemoveOne",
-            description="desc",
-            min_length=5,
-            max_length=15,
-        )
+    def test_remove_saved_games_success_single(self, auth_client, user1, game1):
+        user1.saved_games.add(game1)
 
-        self.user1.saved_games.add(game)
-
-        data = {"saved_games": [game.id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+        data = {"saved_games": [game1.id]}
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user1.refresh_from_db()
-        self.assertNotIn(game, self.user1.saved_games.all())
+        assert response.status_code == status.HTTP_200_OK
+        user1.refresh_from_db()
+        assert game1 not in user1.saved_games.all()
 
-    def test_remove_saved_games_success_multiple(self):
-        g1 = Game.objects.create(
-            name="R1", description="d", min_length=5, max_length=10
-        )
-        g2 = Game.objects.create(
-            name="R2", description="d", min_length=5, max_length=10
-        )
+    def test_remove_saved_games_success_multiple(
+        self, auth_client, user1, game1, game2
+    ):
+        user1.saved_games.add(game1, game2)
 
-        self.user1.saved_games.add(g1, g2)
-
-        data = {"saved_games": [g1.id, g2.id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+        data = {"saved_games": [game1.id, game2.id]}
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user1.refresh_from_db()
-        self.assertNotIn(g1, self.user1.saved_games.all())
-        self.assertNotIn(g2, self.user1.saved_games.all())
+        assert response.status_code == status.HTTP_200_OK
+        user1.refresh_from_db()
+        assert game1 not in user1.saved_games.all()
+        assert game2 not in user1.saved_games.all()
 
-    def test_remove_saved_games_missing_field(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+    def test_remove_saved_games_missing_field(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             {},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert '"saved_games" is required.' in response.data["saved_games"][0]
 
-    def test_remove_saved_games_not_a_list(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+    def test_remove_saved_games_not_a_list(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             {"saved_games": "notalist"},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert '"saved_games" is required.' in response.data["saved_games"][0]
 
-    def test_remove_saved_games_empty_list(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+    def test_remove_saved_games_empty_list(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             {"saved_games": []},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('"saved_games" is required.', response.data["saved_games"][0])
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert '"saved_games" is required.' in response.data["saved_games"][0]
 
-    def test_remove_saved_games_non_numeric_ids(self):
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+    def test_remove_saved_games_non_numeric_ids(self, auth_client, user1):
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             {"saved_games": ["abc"]},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            '"saved_games" must contain only numeric IDs.',
-            response.data["saved_games"][0],
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            '"saved_games" must contain only numeric IDs.'
+            in response.data["saved_games"][0]
         )
 
-    def test_remove_saved_games_duplicated_ids_in_request(self):
-        game = Game.objects.create(
-            name="DupRem", description="d", min_length=5, max_length=10
-        )
-
-        self.user1.saved_games.add(game)
-        game_ids = [game.id, game.id]
+    def test_remove_saved_games_duplicated_ids_in_request(
+        self, auth_client, user1, game1
+    ):
+        user1.saved_games.add(game1)
+        game_ids = [game1.id, game1.id]
 
         data = {"saved_games": game_ids}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            f'Duplicated game id in received "saved_games": {game_ids}',
-            response.data["saved_games"][0],
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            f'Duplicated game id in received "saved_games": {game_ids}'
+            in response.data["saved_games"][0]
         )
 
-    def test_remove_saved_games_not_existing_in_saved_games(self):
-        game = Game.objects.create(
-            name="NotSaved", description="d", min_length=5, max_length=10
-        )
-
-        data = {"saved_games": [game.id]}
-        response = self.client.post(
-            f"/{os.getenv('API_NAMESPACE')}users/{self.user1.id}/remove_saved_games/",
+    def test_remove_saved_games_not_existing_in_saved_games(
+        self, auth_client, user1, game1
+    ):
+        data = {"saved_games": [game1.id]}
+        response = auth_client.post(
+            f"/{os.getenv('API_NAMESPACE')}users/{user1.id}/remove_saved_games/",
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(str(game.id), response.data["saved_games"][0])
-        self.assertIn(
-            "Games do not exist in the user saved games",
-            response.data["saved_games"][0],
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert str(game1.id) in response.data["saved_games"][0]
+        assert (
+            "Games do not exist in the user saved games"
+            in response.data["saved_games"][0]
         )
