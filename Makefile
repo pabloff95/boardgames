@@ -28,3 +28,6 @@ migrate:
 
 createsuperuser:
 	docker compose exec django python manage.py createsuperuser
+
+shell:
+	docker compose exec django python manage.py shell
