@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "users",
     "game",
     "reviews",
+    "media",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
