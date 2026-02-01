@@ -4,7 +4,7 @@ from .models import Image
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_filter = ["name", "url", "bucket_name", "extension"]
-    search_fields = ["name", "id", "bucket_name", "extension"]
-    list_display = ["id", "name", "extension", "bucket_name", "file_key"]
+    list_filter = ["name", "url", "extension"]
+    search_fields = ["name", "id", "extension"]
+    list_display = ["id", "name", "extension", "file_location"]
     readonly_fields = ["type"]

@@ -1,5 +1,6 @@
 from django.db import models
-from .enums import MediaType, Extension
+from .enums import MediaType, Extension, ImageLocations
+from backend.storage_backends import PrivateMediaStorage
 
 
 class Media(models.Model):
@@ -15,9 +16,14 @@ class Media(models.Model):
         abstract = True
 
 
+def file_upload_to_path(instance, filename):
+    return f"{instance.file_location}/{filename}"
+
+
 class Image(Media):
-    file_key = models.CharField(max_length=255, null=False, blank=False)
-    bucket_name = models.CharField(max_length=255, null=False, blank=False)
+    file_location = models.CharField(
+        choices=ImageLocations.choices, max_length=255, null=False, blank=False
+    )
     extension = models.CharField(
         choices=Extension.choices, max_length=10, null=False, blank=False
     )
@@ -26,4 +32,10 @@ class Image(Media):
         choices=MediaType.choices,
         default=MediaType.IMAGE,
         editable=False,
+    )
+    file = models.ImageField(
+        storage=PrivateMediaStorage(),
+        upload_to=file_upload_to_path,
+        null=False,
+        blank=False,
     )

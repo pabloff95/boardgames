@@ -21,3 +21,7 @@ pytest-django==4.11.1
 pytokens==0.1.10
 sqlparse==0.5.3
 typing_extensions==4.15.0
+
+django-storages[s3]==1.14.6
+boto3==1.42.39
+pillow==12.1.0
