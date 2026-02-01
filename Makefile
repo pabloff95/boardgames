@@ -20,7 +20,7 @@ requirements:
 	. backend/venv/bin/activate && rm backend/requirements.txt && pip freeze > backend/requirements.txt
 
 # Django commands
-make migrations:
+makemigrations:
 	docker compose exec django python manage.py makemigrations
 
 migrate:
