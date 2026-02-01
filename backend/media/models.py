@@ -5,7 +5,6 @@ from backend.storage_backends import PrivateMediaStorage
 
 class Media(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False)
-    url = models.URLField(max_length=500, null=False, blank=False)
     type = models.CharField(
         choices=MediaType.choices, max_length=20, null=False, blank=False
     )
