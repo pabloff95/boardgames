@@ -1,6 +1,7 @@
 from django.db import models
-from .enums import MediaType, Extension, ImageLocations
+from .enums import MediaType, ImageLocations
 from backend.storage_backends import PrivateMediaStorage
+from django.core.validators import FileExtensionValidator
 
 
 class Media(models.Model):
@@ -21,10 +22,11 @@ def file_upload_to_path(instance, filename):
 
 class Image(Media):
     file_location = models.CharField(
-        choices=ImageLocations.choices, max_length=255, null=False, blank=False
-    )
-    extension = models.CharField(
-        choices=Extension.choices, max_length=10, null=False, blank=False
+        choices=ImageLocations.choices,
+        max_length=255,
+        null=False,
+        blank=False,
+        editable=False,
     )
     type = models.CharField(
         max_length=20,
@@ -37,4 +39,5 @@ class Image(Media):
         upload_to=file_upload_to_path,
         null=False,
         blank=False,
+        validators=[FileExtensionValidator(allowed_extensions=["png", "jpeg", "jpg"])],
     )
