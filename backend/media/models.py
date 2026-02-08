@@ -41,3 +41,6 @@ class Image(Media):
         blank=False,
         validators=[FileExtensionValidator(allowed_extensions=["png", "jpeg", "jpg"])],
     )
+
+    class Meta:
+        abstract = True
