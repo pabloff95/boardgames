@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Game, GameRules
+from .models import Game, GameRules, GameImage
 
 
 class GameRulesSerializer(serializers.ModelSerializer):
@@ -8,8 +8,15 @@ class GameRulesSerializer(serializers.ModelSerializer):
         fields = ["id", "game", "version", "content", "created_at", "updated_at"]
 
 
+class GameImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameImage
+        fields = ["id", "name", "type", "file"]
+
+
 class GameSerializer(serializers.ModelSerializer):
     rules = GameRulesSerializer(many=True, read_only=True)
+    images = GameImageSerializer(many=True, read_only=True)
     saved_by_count = serializers.IntegerField(read_only=True)
     average_score = serializers.FloatField(read_only=True)
 
@@ -26,6 +33,7 @@ class GameSerializer(serializers.ModelSerializer):
             "rules",
             "saved_by_count",
             "average_score",
+            "images",
         ]
 
 

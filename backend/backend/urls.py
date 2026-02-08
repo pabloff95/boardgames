@@ -13,7 +13,6 @@ urlpatterns = [
     path(API_NAMESPACE, include("game.urls")),
     path(API_NAMESPACE, include("users.urls")),
     path(API_NAMESPACE, include("reviews.urls")),
-    path(API_NAMESPACE, include("media.urls")),
     path(
         f"{API_NAMESPACE}token/",
         TokenObtainPairView.as_view(),

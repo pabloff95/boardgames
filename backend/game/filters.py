@@ -1,5 +1,5 @@
 import django_filters
-from .models import Game, GameRules
+from .models import Game, GameRules, GameImage
 
 
 class GameFilter(django_filters.FilterSet):
@@ -28,3 +28,11 @@ class GameRulesFilter(django_filters.FilterSet):
     class Meta:
         model = GameRules
         fields = ["game", "version", "content", "created_at", "updated_at"]
+
+
+class GameImageFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
+
+    class Meta:
+        model = GameImage
+        fields = ["id", "name"]
