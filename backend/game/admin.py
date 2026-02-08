@@ -2,6 +2,13 @@ from django.contrib import admin
 from .models import Game, GameRules, GameImage
 
 
+class GameImageInline(admin.TabularInline):
+    model = GameImage
+    extra = 1
+    readonly_fields = ["file_location", "created_at"]
+    fields = ["name", "file", "file_location"]
+
+
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_filter = ["min_length", "max_length", "created_at", "updated_at"]
@@ -19,6 +26,7 @@ class GameAdmin(admin.ModelAdmin):
             },
         ),
     ]
+    inlines = [GameImageInline]
 
 
 @admin.register(GameRules)
