@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from media.models import Image
+from media.enums import ImageLocations
 
 
 class Game(models.Model):
@@ -26,3 +28,13 @@ class GameRules(models.Model):
 
     def __str__(self):
         return f"{self.game.name} ({self.version})"
+
+
+class GameImage(Image):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="images")
+    file_location = models.CharField(
+        choices=ImageLocations.choices,
+        max_length=255,
+        default=ImageLocations.GAMES_IMG,
+        editable=False,
+    )

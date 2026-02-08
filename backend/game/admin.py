@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Game, GameRules
+from .models import Game, GameRules, GameImage
+
+
+class GameImageInline(admin.TabularInline):
+    model = GameImage
+    extra = 1
+    readonly_fields = ["file_location", "created_at"]
+    fields = ["name", "file", "file_location"]
 
 
 @admin.register(Game)
@@ -19,6 +26,7 @@ class GameAdmin(admin.ModelAdmin):
             },
         ),
     ]
+    inlines = [GameImageInline]
 
 
 @admin.register(GameRules)
@@ -35,3 +43,11 @@ class GameRulesAdmin(admin.ModelAdmin):
             },
         ),
     ]
+
+
+@admin.register(GameImage)
+class GameImageAdmin(admin.ModelAdmin):
+    list_filter = ["game", "name", "type"]
+    search_fields = ["game", "name", "id"]
+    list_display = ["id", "name", "type"]
+    readonly_fields = ["type", "file_location", "created_at", "updated_at"]
