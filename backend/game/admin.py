@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Game, GameRules
+from .models import Game, GameRules, GameImage
 
 
 @admin.register(Game)
@@ -35,3 +35,11 @@ class GameRulesAdmin(admin.ModelAdmin):
             },
         ),
     ]
+
+
+@admin.register(GameImage)
+class GameImageAdmin(admin.ModelAdmin):
+    list_filter = ["game", "name", "type"]
+    search_fields = ["game", "name", "id"]
+    list_display = ["id", "name", "type"]
+    readonly_fields = ["type", "file_location", "created_at", "updated_at"]
