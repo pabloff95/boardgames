@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Game, GameRules
+from .models import Game, GameRules, GameImage
 
 
 class GameRulesSerializer(serializers.ModelSerializer):
@@ -32,3 +32,9 @@ class GameSerializer(serializers.ModelSerializer):
 class GamesOfTheWeekQuerySerializer(serializers.Serializer):
     days_range = serializers.IntegerField(default=7, min_value=1)
     games_limit = serializers.IntegerField(default=5, min_value=1)
+
+
+class GameImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameImage
+        fields = ["id", "name", "type", "file"]
