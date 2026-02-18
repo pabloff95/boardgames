@@ -1,12 +1,4 @@
 services:
-  db:
-    image: postgres:15
-    env_file:
-    - backend/.env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
   django:
     build:
       target: dev
